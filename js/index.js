@@ -1,5 +1,5 @@
 import * as translationFunctions from "./interpreters.js"; 
-import { putExtraFunctions } from "./extraFunctions.js";
+import { putExtraFunctions } from "./model/extraFunctions.js";
 
 // Variables globales
 let currentInput = "";

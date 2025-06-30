@@ -1,62 +1,5 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📘 Lista de Ejercicios</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Animaciones suaves al aparecer */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.6s ease-out forwards;
-    }
-
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Brillo suave al pasar el mouse */
-    .card:hover {
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
-      transform: translateY(-4px);
-      transition: transform 0.2s, box-shadow 0.3s;
-    }
-  </style>
-</head>
-<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 min-h-screen font-sans">
-  <div class="container mx-auto px-4 py-12">
-    <header class="mb-16 text-center space-y-4">
-  <div class="inline-block px-6 py-2 bg-gradient-to-r from-sky-600 to-purple-700 rounded-full shadow-lg">
-    <span class="text-white text-sm font-semibold tracking-wide uppercase">🔥 Desafía tu mente</span>
-  </div>
-  <h1 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 drop-shadow-lg">
-    💻 Ejercicios Interactivos
-  </h1>
-  <p class="text-gray-300 text-xl md:text-2xl max-w-xl mx-auto">
-    ¡Pone a prueba tus conocimientos de programación con estos desafios! 🚀🧠
-  </p>
-</header>
-
-
-    <div id="ejercicioList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <!-- Ejercicios se cargan aquí -->
-    </div>
-  </div>
-
-  <script>
-    fetch('../js/ejercicios4.json')
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        if (!data.exercises) throw new Error("❗ Missing 'exercises' key in JSON");
-
+export class IndexView {
+    renderExcercises(data){
         const container = document.getElementById('ejercicioList');
 
         data.exercises.forEach((exercise, index) => {
@@ -113,14 +56,12 @@
           card.appendChild(btn);
 
           container.appendChild(card);
-        });
-      })
-      .catch(error => {
-        console.error(error);
+        })
+    }
+
+    renderError(message){
         document.getElementById('ejercicioList').innerHTML = `
-          <p class="text-red-500 text-center text-lg">❌ Error cargando ejercicios: ${error.message}</p>
+          <p class="text-red-500 text-center text-lg">❌ Error cargando ejercicios: ${message}</p>
         `;
-      });
-  </script>
-</body>
-</html>
+    }
+}
