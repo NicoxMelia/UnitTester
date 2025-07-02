@@ -46,7 +46,7 @@ export class IndexView {
           tableWrapper.appendChild(table);
 
           const btn = document.createElement('a');
-          btn.href = `../index.html?ejercicio=E${index + 1}`;
+          btn.href = `./pages/codeRunner.html?ejercicio=E${index + 1}`;
           btn.className = 'inline-block bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md transition-transform hover:scale-105';
           btn.innerHTML = '🚀 ¡Resolver ahora!';
 

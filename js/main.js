@@ -1,4 +1,5 @@
 import { IndexController } from './controller/indexController.js';
+import { CodeRunnerController } from './controller/codeRunnerController.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
