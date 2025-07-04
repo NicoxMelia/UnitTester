@@ -1,8 +1,14 @@
 import {CppInterpreter} from "./Strategies/CppStrategy/CppInterpreter.js";
+import {JavaInterpreter} from "./Strategies/JavaStrategy/JavaInterpreter.js";
 
 export class CodeRunnerModel{
+    /**
+     * El interpreter tiene las siguientes funciones:
+     * - translate: Traduce el código del user a JavaScript.
+     * - putLanguageCode: Inserta codigo específico del lenguaje.
+     */
     constructor(){
-        this.interpreter = new CppInterpreter();
+        this.interpreter = new JavaInterpreter();
         this.translatedCode = "";
         this.testCases = undefined;
     }
@@ -19,11 +25,9 @@ export class CodeRunnerModel{
             const currentInput = input;
             
             try {
-                // Crear función dinámica con el código
                 const dynamicFunction = new Function('output', 'currentInput', jsCode);
                 await dynamicFunction(output, currentInput);
                 output = output.salida;
-                //console.warn('Resultado de la ejecución:', output);
                 return { success: true, output: output.trim() };
             } catch (error) {
                 console.error(error.message)
