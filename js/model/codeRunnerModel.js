@@ -36,7 +36,8 @@ export class CodeRunnerModel{
         }
 
     async getExcerciseById(excerciceId){
-        const response = await fetch('../../data/excercices.json');
+        //const response = await fetch('../../data/excercices.json');
+        const response = await fetch('../../data/excercises.json');
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
         const data = await response.json();
         const exercise = data.exercises.find(e => e.id === excerciceId);
