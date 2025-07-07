@@ -13,12 +13,7 @@ export class CodeRunnerController{
         
     }
 
-    renderJavaView(className){
-        this.view.renderExcercice(className);
-        this.model.getTerminalCode(className.file).then(code => {
-            this.view.renderTerminalCode(code)
-        })
-    }
+    
 
     async init(){
         const id = this.view.getExcerciseId();
@@ -29,6 +24,10 @@ export class CodeRunnerController{
             this.model.getTerminalCode(this.exercise).then(code => {
                 this.view.renderTerminalCode(code);
             })
+
+            if(this.strategy.getName() === "Java"){
+                this.renderClasess(this.exercise);
+            }
         }catch (error) {
             //this.view.showSyntaxError(error.message); no va
             return;
@@ -70,8 +69,19 @@ export class CodeRunnerController{
     }
 
     renderClasess(exercise){
-        exercise.classes.forEach(cls => {
-            this.view.renderClass(cls);
+        const container = document.getElementById('ejercicioList');
+        exercise.classes.forEach((cls, index) => {
+            const card = this.view.renderClass(cls);
+            card.addEventListener('click', () => {
+                console.log(cls)
+                this.strategy.setExerciseIndex(index);
+                this.view.renderInstruction(cls);
+                this.view.renderTable(cls)
+                this.model.getTerminalCode(this.exercise).then(code => {
+                this.view.renderTerminalCode(code);
+                })
+            });
+            container.appendChild(card);
         });
     }
 }

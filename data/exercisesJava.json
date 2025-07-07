@@ -17,8 +17,15 @@
           ]
         },
         {
-          "input": "10",
-          "expected_output": "El doble es: 20"
+          "title": "Disco",
+          "description": "Completar el codigo de la clase Disco.",
+          "file": "./TiendaMusical/Disco.java",
+          "test_cases": [
+            {
+                "input": "Disco disco = new Disco(\"TTT5\", \"Woman\", 200, \"The Beathles\", 2000);\nSystem.out.println(disco.getTitulo());",
+                "expected_output": "Woman"
+            }
+          ]
         }
       ]
     }

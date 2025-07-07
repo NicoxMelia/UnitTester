@@ -88,6 +88,10 @@ export class JavaStrategy {
         return output.salida;
     }
 
+    setExerciseIndex(index) {
+        this.exerciseIndex = index;
+    }
+
     getName() {
         return "Java";
     }

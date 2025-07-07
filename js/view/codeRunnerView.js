@@ -185,7 +185,7 @@ export class CodeRunnerView {
         this.resultsList.appendChild(this.resultDiv);
     }
 
-    renderClass(){
+    renderClass(exercise){
         const card = document.createElement('div');
         card.className = 'card fade-in bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700 transition-all duration-300 space-y-4';
 
@@ -228,6 +228,10 @@ export class CodeRunnerView {
             table.appendChild(thead);
             table.appendChild(tbody);
             tableWrapper.appendChild(table);
+
+            card.appendChild(title);
+            card.appendChild(desc);
+            return card;
     }
 
 }
