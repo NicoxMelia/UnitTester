@@ -25,18 +25,12 @@
             <!-- Editor de C++ -->
             <div class="bg-gray-800 rounded-lg overflow-hidden shadow-xl">
                 <div class="bg-gray-700 px-4 py-3 flex justify-between items-center">
-                    <h2 class="font-mono text-sm font-semibold">Código C++</h2>
+                    <h2 id="titleCode" class="font-mono text-sm font-semibold"></h2>
                     <button id="runBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded-md text-sm font-medium transition-colors">
                         Ejecutar Tests
                     </button>
                 </div>
-                <textarea id="cppCode" class="w-full h-96 bg-gray-800 text-gray-100 p-4 font-mono text-sm focus:outline-none resize-none">#include &lt;iostream&gt;
-using namespace std;
-
-int main() {
-    //Pone aca tu código C++
-    return 0;
-}</textarea>
+                <textarea id="userCode" class="w-full h-96 bg-gray-800 text-gray-100 p-4 font-mono text-sm focus:outline-none resize-none"></textarea>
             </div>
 
             <!-- Resultados y Tests -->

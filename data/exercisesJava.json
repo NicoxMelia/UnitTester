@@ -1,0 +1,26 @@
+{
+  "exercises": [
+    {
+      "id": "E1",
+      "title": "Tienda Musical",
+      "description": "Modelar una tienda de articulos musicales.",
+      "classes": [
+        {
+          "title": "Cliente",
+          "description": "Completar el codigo de la clase Cliente.",
+          "file": "./TiendaMusical/Cliente.java",
+          "test_cases": [
+            {
+                "input": "Cliente cliente = new Cliente(\"Juan\", 25);\nSystem.out.println(cliente.getNombre());",
+                "expected_output": "Juan"
+            }
+          ]
+        },
+        {
+          "input": "10",
+          "expected_output": "El doble es: 20"
+        }
+      ]
+    }
+  ]
+}

@@ -2,19 +2,33 @@ import { CodeRunnerView } from "../view/codeRunnerView.js";
 import { CodeRunnerModel } from "../model/codeRunnerModel.js";
 
 export class CodeRunnerController{
-    constructor(){
-        this.view = new CodeRunnerView();
-        this.model = new CodeRunnerModel();
+    constructor(strategy){
+        this.strategy = strategy
+        this.view = new CodeRunnerView(strategy);
+        this.model = new CodeRunnerModel(strategy);
         this.exercise = null;
         this.testCases = null;
         this.jscode = undefined;
+        this.terminalCode = undefined;
+        
+    }
+
+    renderJavaView(className){
+        this.view.renderExcercice(className);
+        this.model.getTerminalCode(className.file).then(code => {
+            this.view.renderTerminalCode(code)
+        })
     }
 
     async init(){
         const id = this.view.getExcerciseId();
+
         try{
             this.exercise = await this.model.getExcerciseById(id);
             this.view.renderExcercice(this.exercise);
+            this.model.getTerminalCode(this.exercise).then(code => {
+                this.view.renderTerminalCode(code);
+            })
         }catch (error) {
             //this.view.showSyntaxError(error.message); no va
             return;
@@ -29,12 +43,12 @@ export class CodeRunnerController{
             }
             this.view.showJsCode(this.jscode);
             try{
-                this.testCases = this.model.setTestCases(this.exercise);
+                //this.testCases = this.model.setTestCases(this.exercise);
+                this.model.setTestCases(this.exercise);
             }catch(error){
                 this.view.showMissingTestError();
             }
             this.model.runTests().then(tests => {
-                console.log(tests);
                 this.renderTestResults(tests);
             }).catch(error => {
                 console.error(error.message);
@@ -55,5 +69,9 @@ export class CodeRunnerController{
         });
     }
 
-
+    renderClasess(exercise){
+        exercise.classes.forEach(cls => {
+            this.view.renderClass(cls);
+        });
+    }
 }

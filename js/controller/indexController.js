@@ -2,9 +2,9 @@ import { IndexView } from '../view/indexView.js';
 import { IndexModel } from '../model/indexModel.js';
 
 export class IndexController{
-    constructor(){
-        this.view = new IndexView();
-        this.model = new IndexModel();
+    constructor(strategy) {
+        this.view = new IndexView(strategy);
+        this.model = new IndexModel(strategy);
     }
 
     async init() {

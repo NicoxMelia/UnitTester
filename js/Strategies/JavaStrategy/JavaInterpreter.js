@@ -1,10 +1,11 @@
 //import * as translationFunctions from "./interpreters.js";
-import { extractClassVariables, convertClassDeclaration, convertSystemOut, convertConstructors, convertMethods, convertVariableDeclarations, convertObjectCreations, rebuildClassWithProperties, getDefaultValueForType } from "./interpreters.js";
+import { extractClassVariables, convertReturns, quitImports, replaceHashMap, convertHashMapReturns, convertHashMapDeclarations, convertHashMapReturnTypes, convertClassDeclaration, convertSystemOut, convertConstructors, convertMethods, convertVariableDeclarations, convertObjectCreations, rebuildClassWithProperties, getDefaultValueForType } from "./interpreters.js";
 
 export class JavaInterpreter {
     constructor() {
         this.EXECUTION_ORDER = [
             'extractClassVariables',
+            'quitImports',
             'convertClassDeclaration',
             'convertSystemOut',
             'convertConstructors',
@@ -33,11 +34,17 @@ export class JavaInterpreter {
         
         // Convertir el cuerpo principal
         let jsCode = convertClassDeclaration(classBody);
+        jsCode = quitImports(jsCode);
+        jsCode = replaceHashMap(jsCode);
+        jsCode = convertHashMapDeclarations(jsCode);
+        jsCode = convertHashMapReturnTypes(jsCode);
+        jsCode = convertHashMapReturns(jsCode);
         jsCode = convertSystemOut(jsCode);
         jsCode = convertConstructors(jsCode);
         jsCode = convertMethods(jsCode);
         jsCode = convertVariableDeclarations(jsCode);
         jsCode = convertObjectCreations(jsCode);
+        jsCode = convertReturns(jsCode);
         
         // Reconstruir la clase con las variables como propiedades
         if (classVariables.length > 0) {
