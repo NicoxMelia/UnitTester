@@ -11,7 +11,7 @@
           "file": "./TiendaMusical/Cliente.java",
           "test_cases": [
             {
-                "input": "Cliente cliente = new Cliente(\"Juan\", 25);\nSystem.out.println(cliente.getNombre());",
+                "input": "Cliente cliente = new Cliente(25, \"Juan\");\nSystem.out.println(cliente.getNombre());",
                 "expected_output": "Juan"
             }
           ]

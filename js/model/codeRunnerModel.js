@@ -22,15 +22,11 @@ export class CodeRunnerModel{
     }
 
     async executeTranslatedCode(jsCode, input) { //Falta ver
-            let output = {
-                salida: ""
-            };
             const currentInput = input;
             
             try {
-                const dynamicFunction = new Function('output', 'currentInput', jsCode);
-                await dynamicFunction(output, currentInput);
-                output = output.salida;
+                const dynamicFunction = this.strategy.getFunctionToRun(jsCode, currentInput);
+                let output = await this.strategy.runTestFunction(dynamicFunction);
                 return { success: true, output: output.trim() };
             } catch (error) {
                 console.error(error.message)

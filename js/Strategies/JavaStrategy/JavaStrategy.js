@@ -3,6 +3,7 @@ import { JavaInterpreter } from "./JavaInterpreter.js";
 export class JavaStrategy {
 
     constructor() {
+        this.interpreter = new JavaInterpreter();
         this.exerciseIndex = 0;
     }
 
@@ -36,7 +37,7 @@ export class JavaStrategy {
     }
 
     getInterpreter() {
-        return new JavaInterpreter();
+        return this.interpreter;
     }
 
     renderTerminalTitle(titleCode){
@@ -68,12 +69,23 @@ export class JavaStrategy {
     }
 
     getFunctionToRun(jsCode, input) {
+        const test = this.interpreter.translate(input);
         const code = jsCode + `
             try{
-                
+                ${test}
+            }catch(error){
+                output.salida = "Error: " + error.message;
             }
         `;
-        return new Function('output', 'currentInput', jsCode);
+        return new Function('output', code);
+    }
+
+    async runTestFunction(functionName){
+        let output = {
+            salida: ""
+        };
+        await functionName(output)
+        return output.salida;
     }
 
     getName() {
