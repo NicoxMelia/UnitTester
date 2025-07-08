@@ -5,17 +5,17 @@ import java.util.HashMap;
  */
 public class Disco extends Producto {
     private String artista;
-    private int añoLanzamiento;
+    private int anioLanzamiento;
     /**
      * Mapa que almacena las canciones del disco.
      * La clave es el número de pista (1, 2, 3, ...) y el valor es el nombre de la canción.
      */
     private HashMap<Integer, String> canciones; // Número de pista -> Nombre canción
 
-    public Disco(String id, String titulo, double precio, String artista, int añoLanzamiento) {
+    public Disco(String id, String titulo, double precio, String artista, int anioLanzamiento) {
         super(id, titulo, precio);
         this.artista = artista;
-        this.añoLanzamiento = añoLanzamiento;
+        this.anioLanzamiento = anioLanzamiento;
         this.canciones = new HashMap<>();
     }
 
@@ -44,7 +44,7 @@ public class Disco extends Producto {
         return artista;
     }
     public int getAñoLanzamiento() {
-        return añoLanzamiento;
+        return anioLanzamiento;
     }
     public HashMap<Integer, String> getCanciones() {
         return new HashMap<>(canciones);

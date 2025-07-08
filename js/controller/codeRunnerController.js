@@ -33,7 +33,11 @@ export class CodeRunnerController{
             return;
         }
         document.getElementById('runBtn').addEventListener('click', () => {
-            const code = this.view.getCodeToTranslate();
+            let code = this.view.getCodeToTranslate();
+           this.strategy.getAllProyectCode(this.exercise, code).then(allCode => {
+                code = allCode;
+          
+            
             try{
                 this.jscode = this.model.translate(code);
             }catch(error){
@@ -52,7 +56,8 @@ export class CodeRunnerController{
             }).catch(error => {
                 console.error(error.message);
                 this.view.showIncompleteTestError(error.message);
-            });
+            })
+        });
         });
     }
 
@@ -74,6 +79,7 @@ export class CodeRunnerController{
             const card = this.view.renderClass(cls);
             card.addEventListener('click', () => {
                 console.log(cls)
+                this.view.resetTestResults();
                 this.strategy.setExerciseIndex(index);
                 this.view.renderInstruction(cls);
                 this.view.renderTable(cls)

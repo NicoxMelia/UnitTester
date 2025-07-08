@@ -95,4 +95,22 @@ export class JavaStrategy {
     getName() {
         return "Java";
     }
+
+    async getAllProyectCode(exercise, codeUser) {
+        let code = "";
+        // 1. Leer cada archivo de dependencia y concatenarlo a `code`
+        for (const depPath of exercise.classes[this.exerciseIndex].dependencies) {
+            try {
+            const fileContent = await this.getCodeToRender(depPath);
+            code += fileContent + "\n"; // Concatenar con salto de línea
+            } catch (error) {
+            console.error(`Error leyendo ${depPath}:`, error);
+            // Opcional: Continuar con las siguientes dependencias a pesar del error
+            }
+        }
+
+        code += codeUser + "\n"; // 2. Agregar el código del usuario al final
+
+        return code; // Retorna el código concatenado
+    }
 }
