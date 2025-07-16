@@ -10,7 +10,7 @@
           "description": "Completar el codigo de la clase Cliente.",
           "file": "./TiendaMusical/Cliente.java",
           "dependencies":[
-            "./TiendaMusical/Dependencies/Producto.js"
+           
           ],
           "test_cases": [
             {
@@ -39,18 +39,117 @@
       "id": "E2",
       "title": "Veterinaria",
       "description": "Modelar una veterinaria.",
-      "classes":[
+      "classes": [
         {
-          "title": "Cliente",
-          "description": "Completar el codigo de la clase Cliente.",
-          "file": "./TiendaMusical/Cliente.java",
-          "dependencies":[
-            "./TiendaMusical/Dependencies/Producto.js"
+          "title": "Animal",
+          "description": "Completar el codigo de la clase Animal.",
+          "file": "./Veterinaria/Animal.java",
+          "dependencies": [],
+          "test_cases": [
+            {
+              "input": "Animal animal = new Animal(\"Max\", 3);\nanimal.añadirVacuna(\"Rabia\");\nArrayList<Vacuna> vacunas = animal.getVacunas();\nSystem.out.println(vacunas.contains(\"Rabia\"));",
+              "expected_output": "true"
+            },
+            {
+              "input": "Animal animal = new Animal(\"Luna\", 5);\nSystem.out.println(animal.getEdad());",
+              "expected_output": "5"
+            },
+            {
+              "input": "Animal animal = new Animal(\"Bella\", 2);\nanimal.setEdad(3);\nSystem.out.println(animal.getEdad());",
+              "expected_output": "3"
+            },
+            {
+              "input": "Animal animal = new Animal(\"Lucas\", 5);\nanimal.añadirVacuna(\"Ravia\");\nanimal.añadirVacuna(\"Ravia\");\nanimal.añadirVacuna(\"Moquillo\");\nint cantidadVacunas = animal.getVacunas().size();\nSystem.out.println(cantidadVacunas);",
+              "expected_output": "2"
+            }
+          ]
+        },
+        {
+          "title": "Gato",
+          "description": "Completar el codigo de la clase Gato.",
+          "file": "./Veterinaria/Gato.java",
+          "dependencies": [
+            "./Veterinaria/Dependencies/Animal.js",
+            "./Veterinaria/Dependencies/TipoAnimal.js"
           ],
           "test_cases": [
             {
-                "input": "Cliente cliente = new Cliente(25, \"Juan\");\nSystem.out.println(cliente.getNombre());",
-                "expected_output": "Juan"
+              "input": "Gato gato = new Gato(\"Milo\", 4, \"Negro\");\ngato.añadirJuguete(\"Ratón\");\nArrayList<Juguete> juguetes = gato.getJuguetesFavoritos()\nSystem.out.println(juguetes.contains(\"Ratón\"));",
+              "expected_output": "true"
+            },
+            {
+              "input": "Gato gato = new Gato(\"Luna\", 8, \"Blanco\");\nSystem.out.println(gato.esMayor());",
+              "expected_output": "true"
+            },
+            {
+              "input": "Gato gato = new Gato(\"Simba\", 2, \"Naranja\");\nSystem.out.println(gato.getTipo());",
+              "expected_output": "GATO"
+            }
+          ]
+        },
+        {
+          "title": "Perro",
+          "description": "Completar el codigo de la clase Perro.",
+          "file": "./Veterinaria/Perro.java",
+          "dependencies": [
+            "./Veterinaria/Dependencies/Animal.js",
+            "./Veterinaria/Dependencies/TipoAnimal.js",
+            "./Veterinaria/Dependencies/NivelEntrenamiento.js"
+          ],
+          "test_cases": [
+            {
+              "input": "Perro perro = new Perro(\"Rocky\", 3, \"Labrador\", 8);\nperro.añadirEntrenamiento(\"Sentado\", NivelEntrenamiento.BASICO);\nSystem.out.println(perro.getEntrenamientos().containsKey(\"Sentado\"));",
+              "expected_output": "true"
+            },
+            {
+              "input": "Perro perro = new Perro(\"Max\", 5, \"Chihuahua\", 4);\nSystem.out.println(perro.calcularComidaDiaria());",
+              "expected_output": "50"
+            },
+            {
+              "input": "Perro perro = new Perro(\"Bella\", 2, \"Golden\", 12);\nSystem.out.println(perro.getTipo());",
+              "expected_output": "PERRO"
+            }
+          ]
+        },
+        {
+          "title": "Cliente",
+          "description": "Completar el codigo de la clase Cliente.",
+          "file": "./Veterinaria/Cliente.java",
+          "dependencies": [
+            "./Veterinaria/Dependencies/Animal.js",
+            "./Veterinaria/Dependencies/TipoAnimal.js",
+            "./Veterinaria/Dependencies/Gato.js"
+          ],
+          "test_cases": [
+            {
+              "input": "Cliente cliente = new Cliente(\"C001\", \"Juan\");\ncliente.registrarMascota(new Gato(\"Milo\", 3, \"Gris\"));\nSystem.out.println(cliente.getMascotas().containsKey(\"Milo\"));",
+              "expected_output": "true"
+            },
+            {
+              "input": "Cliente cliente = new Cliente(\"C003\", \"Carlos\");\nSystem.out.println(cliente.getNombre());",
+              "expected_output": "Carlos"
+            }
+          ]
+        },
+        {
+          "title": "Veterinaria",
+          "description": "Completar el codigo de la clase Veterinaria.",
+          "file": "./Veterinaria/Veterinaria.java",
+          "dependencies": [
+            "./Veterinaria/Dependencies/Cliente.js"
+          ],
+          "test_cases": [
+            {
+              "input": "Veterinaria vet = new Veterinaria(\"PetCare\");\nvet.añadirCliente(new Cliente(\"C001\", \"Juan\"));\nSystem.out.println(vet.getClientes().size());",
+              "expected_output": "1"
+            },
+            {
+              "input": "Veterinaria vet = new Veterinaria(\"AnimalHealth\");\nvet.actualizarStock(\"Paracetamol\", 50);\nSystem.out.println(vet.getStockMedicamentos().containsKey(\"Paracetamol\"));",
+              "expected_output": "true"
+            },
+            {
+              "input": "Veterinaria vet = new Veterinaria(\"PetFriends\");\nSystem.out.println(vet.getNombre());",
+              "expected_output": "PetFriends"
             }
           ]
         }

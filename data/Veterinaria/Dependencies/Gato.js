@@ -1,6 +1,3 @@
-const Animal = require('./Animal');
-const TipoAnimal = require('./TipoAnimal');
-
 class Gato extends Animal {
     constructor(nombre, edad, color) {
         super(nombre, edad);
@@ -24,5 +21,3 @@ class Gato extends Animal {
     getJuguetesFavoritos() { return [...this.juguetesFavoritos]; }
     getTipo() { return this.tipo; }
 }
-
-module.exports = Gato;

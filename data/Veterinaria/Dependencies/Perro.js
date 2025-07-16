@@ -26,5 +26,3 @@ class Perro extends Animal {
     getEntrenamientos() { return new Map(this.entrenamientos); }
     getTipo() { return this.tipo; }
 }
-
-module.exports = Perro;

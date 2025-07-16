@@ -3,5 +3,3 @@ const NivelEntrenamiento = {
     INTERMEDIO: 'INTERMEDIO',
     AVANZADO: 'AVANZADO'
 };
-
-module.exports = NivelEntrenamiento;

@@ -156,7 +156,7 @@ export class CodeRunnerView {
                 </div>
                 <div>
                     <div class="text-xs text-gray-400 mb-1">Obtenido</div>
-                    <div class="bg-gray-700 p-2 rounded font-mono">${this.formatOutput(test.output)}</div>
+                    <div class="bg-gray-700 p-2 break-words rounded font-mono">${this.formatOutput(test.output)}</div>
                 </div>
             </div>
         `;

@@ -1,5 +1,34 @@
 //import * as translationFunctions from "./interpreters.js";
-import { extractClassVariables, convertReturns, quitImports, replaceHashMap, convertHashMapReturns, convertHashMapDeclarations, convertHashMapReturnTypes, convertClassDeclaration, convertSystemOut, convertConstructors, convertMethods, convertVariableDeclarations, convertObjectCreations, rebuildClassWithProperties, getDefaultValueForType } from "./interpreters.js";
+import {
+    extractClassVariables,
+    returnVariable,
+    convertReturns,
+    quitImports,
+    replaceHashMap,
+    convertHashMapReturns,
+    convertHashMapDeclarations,
+    convertHashMapReturnTypes,
+    convertHashMapMethods,
+    convertClassDeclaration,
+    convertSystemOut,
+    convertConstructors,
+    convertMethods,
+    convertVariableDeclarations,
+    convertObjectCreations,
+    rebuildClassWithProperties,
+    getDefaultValueForType,
+    convertWhileLoops,
+    convertForLoops,
+    convertForEachLoops,
+    convertIfElse,
+    convertSwitchStatements,
+    convertDoWhileLoops,
+    convertBreakContinue,
+    convertArrayListDeclarations,
+    convertArrayListVariableDeclarations,
+    convertArrayListMethods,
+    convertArrayListReturnTypes,
+} from "./interpreters.js";
 
 export class JavaInterpreter {
     constructor() {
@@ -34,10 +63,12 @@ export class JavaInterpreter {
         
         // Convertir el cuerpo principal
         let jsCode = convertClassDeclaration(classBody);
+        jsCode = returnVariable(jsCode, classVariables);
         jsCode = quitImports(jsCode);
         jsCode = replaceHashMap(jsCode);
         jsCode = convertHashMapDeclarations(jsCode);
         jsCode = convertHashMapReturnTypes(jsCode);
+        jsCode = convertHashMapMethods(jsCode);
         jsCode = convertHashMapReturns(jsCode);
         jsCode = convertSystemOut(jsCode);
         jsCode = convertConstructors(jsCode);
@@ -45,7 +76,23 @@ export class JavaInterpreter {
         jsCode = convertVariableDeclarations(jsCode);
         jsCode = convertObjectCreations(jsCode);
         jsCode = convertReturns(jsCode);
-        
+
+        //nuevas
+        jsCode = convertWhileLoops(jsCode);
+        jsCode = convertForLoops(jsCode);
+        jsCode = convertForEachLoops(jsCode);
+        jsCode = convertIfElse(jsCode);
+        jsCode = convertSwitchStatements(jsCode);
+        jsCode = convertDoWhileLoops(jsCode);
+        jsCode = convertBreakContinue(jsCode);
+
+        //arraylist
+
+        jsCode = convertArrayListDeclarations(jsCode);
+        jsCode = convertArrayListVariableDeclarations(jsCode);
+        jsCode = convertArrayListMethods(jsCode);
+        jsCode = convertArrayListReturnTypes(jsCode);
+            
         // Reconstruir la clase con las variables como propiedades
         if (classVariables.length > 0) {
             jsCode = rebuildClassWithProperties(jsCode, classVariables);
@@ -56,7 +103,7 @@ export class JavaInterpreter {
     }
 
     putLanguageCode(jsCode) {
-        jsCode = `
+      /*  jsCode = `
                 // Java-like functionality
                 function assertTrue(condition) {
                     if (!condition) throw new Error("Assertion failed: expected true");
@@ -75,7 +122,18 @@ export class JavaInterpreter {
                 }
                 
                 ${jsCode}
-            `;
+            `;*/
+
+        jsCode = `
+        function getCollectionSize(collection) {
+        console.log(collection);
+            if (collection instanceof Map) {
+                return collection.size;
+            } else if (Array.isArray(collection)) {
+                return collection.length;
+            }
+        }
+            ${jsCode}`
     
         return jsCode;
     }

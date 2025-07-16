@@ -46,6 +46,6 @@ public class Perro extends Animal {
         return new HashMap<>(entrenamientos);
     }
     public TipoAnimal getTipo() {
-        return tipo;
+        return TipoAnimal.PERRO;
     }
 }

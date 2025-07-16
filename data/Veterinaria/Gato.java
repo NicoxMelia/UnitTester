@@ -41,6 +41,6 @@ public class Gato extends Animal {
         return new ArrayList<>(juguetesFavoritos);
     }
     public TipoAnimal getTipo() {
-        return tipo;
+        return TipoAnimal.GATO;
     }
 }

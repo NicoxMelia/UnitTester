@@ -27,5 +27,3 @@ class Veterinaria {
     getClientes() { return [...this.clientes]; }
     getStockMedicamentos() { return new Map(this.stockMedicamentos); }
 }
-
-module.exports = Veterinaria;

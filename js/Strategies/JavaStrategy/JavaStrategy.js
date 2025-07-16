@@ -77,6 +77,8 @@ export class JavaStrategy {
                 output.salida = "Error: " + error.message;
             }
         `;
+
+        console.warn(code)
         return new Function('output', code);
     }
 

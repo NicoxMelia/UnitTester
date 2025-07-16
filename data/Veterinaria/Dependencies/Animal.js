@@ -21,5 +21,3 @@ class Animal {
     getVacunas() { return [...this.vacunas]; }
     setEdad(edad) { this.edad = edad; }
 }
-
-module.exports = Animal;

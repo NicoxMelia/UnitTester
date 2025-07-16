@@ -7,7 +7,8 @@ class Cliente {
 
     registrarMascota(mascota) {
         if (!this.mascotas.has(mascota.getNombre())) {
-            this.mascotas.set(mascota.getNombre(), mascota);
+            //this.mascotas.set(mascota.getNombre(), mascota);
+            this.mascotas[mascota.getNombre()] = mascota; // Usando Map como objeto
         }
     }
 
@@ -17,12 +18,13 @@ class Cliente {
             GATO: 0
         };
 
-        for (const mascota of this.mascotas.values()) {
+        // Forma correcta de iterar sobre los valores de un Map
+        this.mascotas.forEach((mascota) => {
             if (mascota.getTipo) {
                 const tipo = mascota.getTipo();
                 conteo[tipo]++;
             }
-        }
+        });
 
         return conteo;
     }
@@ -32,5 +34,3 @@ class Cliente {
     getNombre() { return this.nombre; }
     getMascotas() { return new Map(this.mascotas); }
 }
-
-module.exports = Cliente;

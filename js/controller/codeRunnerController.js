@@ -44,7 +44,7 @@ export class CodeRunnerController{
                 this.view.showSyntaxError(error.message);
                 return;
             }
-            this.view.showJsCode(this.jscode);
+           // this.view.showJsCode(this.jscode);
             try{
                 //this.testCases = this.model.setTestCases(this.exercise);
                 this.model.setTestCases(this.exercise);
