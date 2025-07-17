@@ -1,7 +1,8 @@
 //import * as translationFunctions from "./interpreters.js";
 import {
+    convertComplexExpressions,
+    removeCommentsAndJavadocs,
     extractClassVariables,
-    returnVariable,
     convertReturns,
     quitImports,
     replaceHashMap,
@@ -58,42 +59,48 @@ export class JavaInterpreter {
     }
 
     translate(javaCode) {
-        // Extraer y procesar variables de clase
         const { classBody, classVariables } = extractClassVariables(javaCode);
-        
-        // Convertir el cuerpo principal
-        let jsCode = convertClassDeclaration(classBody);
-        jsCode = returnVariable(jsCode, classVariables);
-        jsCode = quitImports(jsCode);
-        jsCode = replaceHashMap(jsCode);
-        jsCode = convertHashMapDeclarations(jsCode);
-        jsCode = convertHashMapReturnTypes(jsCode);
-        jsCode = convertHashMapMethods(jsCode);
-        jsCode = convertHashMapReturns(jsCode);
-        jsCode = convertSystemOut(jsCode);
-        jsCode = convertConstructors(jsCode);
-        jsCode = convertMethods(jsCode);
+
+        // 1. Limpieza inicial y estructura básica
+        let jsCode = quitImports(classBody);
+        jsCode = removeCommentsAndJavadocs(jsCode); // Limpieza de comentarios y Javadocs
+        jsCode = convertClassDeclaration(jsCode);
+
+        // 2. Declaraciones de variables
         jsCode = convertVariableDeclarations(jsCode);
-        jsCode = convertObjectCreations(jsCode);
-        jsCode = convertReturns(jsCode);
-
-        //nuevas
-        jsCode = convertWhileLoops(jsCode);
-        jsCode = convertForLoops(jsCode);
-        jsCode = convertForEachLoops(jsCode);
-        jsCode = convertIfElse(jsCode);
-        jsCode = convertSwitchStatements(jsCode);
-        jsCode = convertDoWhileLoops(jsCode);
-        jsCode = convertBreakContinue(jsCode);
-
-        //arraylist
-
+        jsCode = convertHashMapDeclarations(jsCode);
         jsCode = convertArrayListDeclarations(jsCode);
         jsCode = convertArrayListVariableDeclarations(jsCode);
+
+        // 3. Estructuras de control (para definir ámbitos)
+        jsCode = convertForLoops(jsCode);
+        jsCode = convertForEachLoops(jsCode);
+        jsCode = convertWhileLoops(jsCode);
+        jsCode = convertDoWhileLoops(jsCode);
+        jsCode = convertIfElse(jsCode);
+        jsCode = convertSwitchStatements(jsCode);
+        jsCode = convertBreakContinue(jsCode);
+
+
+        // 5. Funciones y métodos
+        jsCode = convertConstructors(jsCode);
+        jsCode = convertMethods(jsCode);
+        jsCode = convertHashMapMethods(jsCode);
         jsCode = convertArrayListMethods(jsCode);
+
+        // 6. Retornos y expresiones finales
+        jsCode = replaceHashMap(jsCode);
+        jsCode = convertObjectCreations(jsCode);
+        jsCode = convertHashMapReturns(jsCode);
         jsCode = convertArrayListReturnTypes(jsCode);
-            
-        // Reconstruir la clase con las variables como propiedades
+        jsCode = convertHashMapReturnTypes(jsCode);
+        jsCode = convertReturns(jsCode);
+
+         // 4. Convertir expresiones complejas (¡NUEVO!)
+        jsCode = convertComplexExpressions(jsCode);  // <--- Aquí
+
+        // 7. Salida y reconstrucción
+        jsCode = convertSystemOut(jsCode);
         if (classVariables.length > 0) {
             jsCode = rebuildClassWithProperties(jsCode, classVariables);
         }

@@ -1,7 +1,8 @@
 // Funciones auxiliares específicas
+const classVariables = [];
 function extractClassVariables(javaCode) {
     const classVarRegex = /(private|protected|public)\s+(?!class)([\w<>,\s]+)\s+(\w+)\s*(=\s*[^;]+)?\s*;/g;
-    const classVariables = [];
+   // const classVariables = [];
     
     const classBody = javaCode.replace(classVarRegex, (match, modifier, type, name, value) => {
         classVariables.push({ 
@@ -12,7 +13,6 @@ function extractClassVariables(javaCode) {
         });
         return '';
     });
-    console.warn(classVariables);
     return { classBody, classVariables };
 }
 
@@ -20,52 +20,84 @@ function quitImports(code) {
     return code.replace(/import\s+[\w.]+;/g, '');
 }
 
-function returnVariable(code, vars) {
-    const varNames = vars.map(v => v.name);
-    
-    // 1. Primero marcamos los parámetros de métodos para protegerlos
-    let processedCode = code.replace(/(public|private|protected)?\s+\w+\s+(\w+)\s*\(([^)]*)\)/g, 
-        (match, modifier, methodName, params) => {
-            // Marcamos cada parámetro (tipo + nombre)
-            const protectedParams = params.replace(/(\w+)\s+(\w+)/g, (_, type, paramName) => {
-                return `${type} __PARAM_${paramName}__`;
-            });
-            return `${modifier || ''} ${methodName}(${protectedParams})`;
-        }
-    );
-    
-    // 2. Ahora reemplazamos las variables de clase
-    processedCode = processedCode.replace(/(?<!\w\.|this\.)\b(\w+)\b(?=\s*[;),=+\-*\/%]|$)/g, 
-        (match, varName) => {
-            return varNames.includes(varName) ? `this.${varName}` : match;
-        }
-    );
-    
-    // 3. Restauramos los parámetros marcados
-    processedCode = processedCode.replace(/__PARAM_(\w+)__/g, '$1');
-    
-    return processedCode;
+function replaceHashMap(code) {
+    let jsCode = code.replace(/new\s+HashMap\s*<\s*>\s*\(\s*\)/g, 'new Map()');
+    jsCode = jsCode.replace(/new\s+HashMap\s*<\s*([^>]+)\s*>\s*\(\s*\)/g, 'new Map()');
+    jsCode = jsCode.replace(/new\s+HashMap\s*\(\s*\)/g, 'new Map()');
+    jsCode = jsCode.replace(/new\s+HashMap\s*<\s*[^>]*\s*>\s*\(\s*(\d+)\s*\)/g, 'new Map()');
+    jsCode = jsCode.replace(/new\s+HashMap\s*<\s*[^>]*\s*>\s*\(\s*\d+\s*,\s*\d*\.\d+\s*\)/g, 'new Map()');
+    return jsCode;
 }
 
-function replaceHashMap(code) {
-    // Caso 1: new HashMap<>()
-    let jsCode = code.replace(/new\s+HashMap\s*<\s*>\s*\(\s*\)/g, 'new Map()');
-    
-    // Caso 2: new HashMap<Type>() con tipos
-    jsCode = jsCode.replace(/new\s+HashMap\s*<\s*([^>]+)\s*>\s*\(\s*\)/g, 'new Map()');
-    
-    // Caso 3: new HashMap() (sin diamantes)
-    jsCode = jsCode.replace(/new\s+HashMap\s*\(\s*\)/g, 'new Map()');
-    
-    // Caso 4: Inicialización con capacidad: new HashMap(100)
-    jsCode = jsCode.replace(/new\s+HashMap\s*<\s*[^>]*\s*>\s*\(\s*(\d+)\s*\)/g, 'new Map()');
-    
-    // Caso 5: Inicialización con capacidad y factor de carga
-    jsCode = jsCode.replace(/new\s+HashMap\s*<\s*[^>]*\s*>\s*\(\s*\d+\s*,\s*\d*\.\d+\s*\)/g, 'new Map()');
-    
-    //jsCode = jsCode.replace(/HashMap\s*<[a-zA-Z]*,\s*[a-zA-Z]*>\s*(\w+)/g, '$1');
+function removeCommentsAndJavadocs(javaCode) {
+    // Expresión regular combinada para:
+    // 1. Javadocs (/** ... */)
+    // 2. Comentarios multi-línea (/* ... */)
+    // 3. Comentarios de una línea (// ...)
+    return javaCode.replace(/\/\*\*[\s\S]*?\*\//g, '')  // Javadocs
+                   .replace(/\/\*[\s\S]*?\*\//g, '')    // Comentarios /* */
+                   .replace(/\/\/.*$/gm, '');           // Comentarios //
+}
 
-    return jsCode;
+function needsThis(code, varName) {
+    const jsKeywords = ['function', 'let', 'const', 'var', 'if', 'else', 'for', 'while', 
+        'do', 'switch', 'case', 'default', 'return', 'class', 'constructor', 'this', 'new', 
+        'import', 'export', 'try', 'catch', 'finally', 'throw', 'async', 'await', 'break', 
+        'continue', 'true', 'false', 'null', 'undefined', 'typeof', 'instanceof', 'in', 'with', 
+        'yield', 'debugger', 'void', 'delete', 'setTimeout', 'setInterval', 'clearTimeout', 
+        'clearInterval', 'constructor', 'get', 'set', 'static', 'public', 'private', 'protected',
+        'abstract', 'interface', 'extends', 'implements', 'super', 'new', 'import', 'this'];
+    
+    // 1. Si es palabra reservada de JS
+    if (jsKeywords.includes(varName)) {
+        return false;
+    }
+
+    // 2. Si es parámetro de función (solo en el contexto de declaración)
+    const isParam = new RegExp(`(?:function|constructor|\\w+\\s*\\([^)]*\\b${varName}\\b[^)]*\\))`).test(code);
+    if (isParam) {
+        return false;
+    }
+
+    // 3. Si es declaración local (let/const/var)
+    const isLocalVar = new RegExp(`(let|const|var)\\s+${varName}(\\s*[=;,]|$)`).test(code);
+    if (isLocalVar) {
+        return false;
+    }
+
+    // 4. Verificar si es propiedad de clase
+    const isClassProperty = classVariables.some(v => v.name === varName);
+    
+    return isClassProperty; // Solo usa this. si es propiedad de clase
+}
+
+function convertComplexExpressions(code) {
+    // Patrón para detectar variables con o sin métodos encadenados
+    const complexVarPattern = /(\b\w+(?:\.\w+\(\))*)\b(?![.(])/g;
+    
+    //return code.replace(complexVarPattern, (match, variable) => {
+    //     // Separar la parte base de los métodos
+    //     const baseVar = variable.split('.')[0];
+    //     const useThis = needsThis(code, baseVar);
+        
+    //     return useThis ? `this.${variable}` : variable;
+    // });
+
+     const structurePattern = 
+        /(if|while|for|switch|System\s*\.\s*out\s*\.\s*println)\s*\(([^)]*)\)/g;
+
+    return code.replace(structurePattern, (match, keyword, condition) => {
+        const processedCondition = condition.replace(
+            /\b(\w+(?:\.\w+\(\))*)\b/g,
+            (m, variable) => {
+                const baseVar = variable.split('.')[0];
+                const useThis = classVariables.some(v => v.name === baseVar) && keyword !== 'for';
+                console.log(`Variable: ${variable}, Use this?: ${useThis}`);
+                return useThis ? `this.${variable}` : variable;
+            }
+        );
+        return `${keyword}(${processedCondition})`;
+    });
 }
 
 function convertHashMapMethods(code) {
@@ -73,60 +105,93 @@ function convertHashMapMethods(code) {
     
     // put() → set()
     result = result.replace(/(\b\w+(?:\.\w+\(\))*)\s*\.\s*put\s*\(\s*([^)]*?)(?=\s*,\s*[^)]*\))\s*,\s*([^)]*)\s*\)/g, 
-        `typeof $1 !== 'undefined' ? $1.set($2, $3) : this.$1.set($2, $3)`);
+        (match, obj, key, value) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `this.${obj}.set(${key}, ${value})` : `${obj}.set(${key}, ${value})`;
+        });
     
     // get() → get()
     result = result.replace(/(\w+)\.get\s*\((.*?)\)/g, 
-        `typeof $1 !== 'undefined' ? $1.get($2) : this.$1.get($2)`);
+        (match, obj, key) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `this.${obj}.get(${key})` : `${obj}.get(${key})`;
+        });
     
     // containsKey() → has()
-    result = result.replace(/(?:System\s*\.\s*out\s*\.\s*println\s*\(\s*)?(\b\w+(?:\.\w+\(\))*)\s*\.\s*containsKey\s*\(\s*([^)]*)\s*\)(?:\s*\))?/g, (match, group1, group2) => {
-        const replacement = `typeof ${group1} !== 'undefined' ? ${group1}.has(${group2}) : this.${group1}.has(${group2})`;
-        if (match.includes('System.out.println')) {
-            return `System.out.println(${replacement})`;
-        }
-        return replacement;
-    });
+    result = result.replace(/(?:System\s*\.\s*out\s*\.\s*println\s*\(\s*)?(\b\w+(?:\.\w+\(\))*)\s*\.\s*containsKey\s*\(\s*([^)]*)\s*\)(?:\s*\))?/g, 
+        (match, obj, key, offset, original) => {
+            const useThis = needsThis(original, obj);
+            const replacement = useThis ? `this.${obj}.has(${key})` : `${obj}.has(${key})`;
+            if (match.includes('System.out.println')) {
+                return `System.out.println(${replacement})`;
+            }
+            return replacement;
+        });
     
     // keySet() → Array.from(map.keys())
     result = result.replace(/(\w+)\.keySet\s*\(\s*\)/g, 
-        `typeof $1 !== 'undefined' ? Array.from($1.keys()) : Array.from(this.$1.keys())`);
+        (match, obj) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `Array.from(this.${obj}.keys())` : `Array.from(${obj}.keys())`;
+        });
     
     // values() → Array.from(map.values())
     result = result.replace(/(\w+)\.values\s*\(\s*\)/g, 
-        `typeof $1 !== 'undefined' ? Array.from($1.values()) : Array.from(this.$1.values())`);
+        (match, obj) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `Array.from(this.${obj}.values())` : `Array.from(${obj}.values())`;
+        });
     
     // entrySet() → Array.from(map.entries())
     result = result.replace(/(\w+)\.entrySet\s*\(\s*\)/g, 
-        `typeof $1 !== 'undefined' ? Array.from($1.entries()) : Array.from(this.$1.entries())`);
+        (match, obj) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `Array.from(this.${obj}.entries())` : `Array.from(${obj}.entries())`;
+        });
     
     // size() → getCollectionSize
     result = result.replace(/(\b\w+(?:\.\w+\(\))*)\s*\.\s*size\s*\(\s*\)/g, 
-        `typeof $1 !== 'undefined' ? getCollectionSize($1) : getCollectionSize(this.$1)`);
+        (match, obj) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `getCollectionSize(this.${obj})` : `getCollectionSize(${obj})`;
+        });
     
     // isEmpty() → size check
     result = result.replace(/(\w+)\.isEmpty\s*\(\s*\)/g, 
-        `typeof $1 !== 'undefined' ? $1.size === 0 : this.$1.size === 0`);
+        (match, obj) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `this.${obj}.size === 0` : `${obj}.size === 0`;
+        });
     
     // remove() → delete()
     result = result.replace(/(\w+)\.remove\s*\((.*?)\)/g, 
-        `typeof $1 !== 'undefined' ? $1.delete($2) : this.$1.delete($2)`);
+        (match, obj, key) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `this.${obj}.delete(${key})` : `${obj}.delete(${key})`;
+        });
     
     // clear() → clear()
     result = result.replace(/(\w+)\.clear\s*\(\s*\)/g, 
-        `typeof $1 !== 'undefined' ? $1.clear() : this.$1.clear()`);
+        (match, obj) => {
+            const useThis = needsThis(code, obj);
+            return useThis ? `this.${obj}.clear()` : `${obj}.clear()`;
+        });
     
     return result;
 }
 
 function convertHashMapIterations(code) {
-    // Iteración con entrySet() y for
     let result = code.replace(/for\s*\(\s*Map\.Entry\s*<\s*([^,]+)\s*,\s*([^>]+)\s*>\s*(\w+)\s*:\s*(\w+)\.entrySet\s*\(\s*\)\s*\)\s*\{/g, 
-        `for (let [$3.key, $3.value] of typeof $4 !== 'undefined' ? $4.entries() : this.$4.entries()) {`);
+        (match, keyType, valueType, entryVar, mapVar) => {
+            const useThis = needsThis(code, mapVar);
+            return `for (let [${entryVar}.key, ${entryVar}.value] of ${useThis ? `this.${mapVar}` : mapVar}.entries()) {`;
+        });
     
-    // Iteración con keySet() y for
     result = result.replace(/for\s*\(\s*([^\s]+)\s+(\w+)\s*:\s*(\w+)\.keySet\s*\(\s*\)\s*\)\s*\{/g, 
-        `for (let $2 of typeof $3 !== 'undefined' ? $3.keys() : this.$3.keys()) {`);
+        (match, type, varName, mapVar) => {
+            const useThis = needsThis(code, mapVar);
+            return `for (let ${varName} of ${useThis ? `this.${mapVar}` : mapVar}.keys()) {`;
+        });
     
     return result;
 }
@@ -139,7 +204,6 @@ function convertHashMapReturns(code) {
 }
 
 function convertHashMapDeclarations(code) {
-    // Convertir declaraciones de variables HashMap
     return code.replace(
         /(private|public|protected)\s+(?:final\s+)?HashMap\s*<\s*([^>]+)\s*>\s+(\w+)\s*(=\s*[^;]+)?\s*;/g,
         (match, modifier, genericTypes, varName, initialization) => {
@@ -167,13 +231,11 @@ function convertClassDeclaration(code) {
 }
 
 function convertSystemOut(code) {
-    //return code.replace(/System\s*\.\s*out\s*\.\s*println\s*\((.*?)\)\s*;/g, 'output.salida += $1 + String(\"\\n\")');
-    return code.replace(/System\s*\.\s*out\s*\.\s*println\s*\((.*?)\)\s*;/g, 'output.salida += $1 + String(\"\\n\")');
+    return code.replace(/System\s*\.\s*out\s*\.\s*println\s*\((.*?)\)\s*;/g, 'output.salida += $1 + String("\\n")');
 }
 
 function convertConstructors(code) {
     return code.replace(/public\s+(\w+)\s*\(([^)]*)\)/g, (match, className, params) => {
-        // Eliminar tipos de los parámetros
         const jsParams = params.split(',')
             .map(p => {
                 const parts = p.trim().split(/\s+/);
@@ -218,20 +280,14 @@ function rebuildClassWithProperties(jsCode, classVariables) {
     const propsCode = classVariables.map(v => {
         const value = v.value || getDefaultValueForType(v.type);
        // return `    this.${v.name} = ${value};`;
+       return "";
     }).join('\n');
 
     const classOpenBraceIndex = jsCode.indexOf('{');
     
     return jsCode.slice(0, classOpenBraceIndex + 1) +  
+           '\n' + propsCode + '\n' +
            jsCode.slice(classOpenBraceIndex + 1);
-}
-
-function convertReturns(code) {
-    let returnSentence = `
-    return typeof $1 !== 'undefined' ? $1 : this.$1
-    `
-    //return code.replace(/return\s+([a-zA-Z_]\w*)\s*;/g, 'return this.$1;');
-    return code.replace(/return\s+([a-zA-Z_]\w*)\s*;/g, returnSentence);
 }
 
 function getDefaultValueForType(type) {
@@ -250,15 +306,20 @@ function getDefaultValueForType(type) {
     }
 }
 
+function convertReturns(code) {
+    return code.replace(/return\s+([a-zA-Z_]\w*)\s*;/g, 
+        (match, varName) => {
+            const useThis = classVariables.some(v => v.name === varName);
+            return useThis ? `return this.${varName};` : `return ${varName};`;
+        });
+}
+
 function convertWhileLoops(code) {
-    // Convertir bucles while (la sintaxis es similar en ambos lenguajes)
     return code.replace(/while\s*\((.*?)\)\s*\{/g, 'while ($1) {');
 }
 
 function convertForLoops(code) {
-    // Convertir bucles for tradicionales
     return code.replace(/for\s*\((.*?;\s*.*?;\s*.*?)\)\s*\{/g, (match, condition) => {
-        // Eliminar declaraciones de tipo en la inicialización (ej: int i = 0 → let i = 0)
         const parts = condition.split(';');
         const initPart = parts[0].replace(/\b(int|double|float|char|byte|short|long)\s+(\w+)/g, 'let $2');
         return `for (${initPart};${parts[1]};${parts[2]}) {`;
@@ -266,13 +327,14 @@ function convertForLoops(code) {
 }
 
 function convertForEachLoops(code) {
-    // Convertir bucles for-each de Java a for-of de JavaScript
     return code.replace(/for\s*\((?:final\s+)?([\w<>]+)\s+(\w+)\s*:\s*([^)]+)\)\s*\{/g, 
-        `for (let $2 of typeof $3 !== 'undefined' ? $3 : this.$3) {`);
+        (match, type, varName, collection) => {
+            const useThis = needsThis(code, collection);
+            return `for (let ${varName} of ${useThis ? `this.${collection}` : collection}) {`;
+        });
 }
 
 function convertIfElse(code) {
-    // Convertir if-else (la sintaxis es similar, pero podemos limpiar paréntesis extra)
     let result = code.replace(/if\s*\((.*?)\)\s*\{/g, 'if ($1) {');
     result = result.replace(/}\s*else\s*if\s*\((.*?)\)\s*\{/g, '} else if ($1) {');
     result = result.replace(/}\s*else\s*\{/g, '} else {');
@@ -280,45 +342,32 @@ function convertIfElse(code) {
 }
 
 function convertSwitchStatements(code) {
-    // Convertir switch statements de Java a JavaScript
     let result = code.replace(/switch\s*\((.*?)\)\s*\{/g, 'switch ($1) {');
-    
-    // Convertir case statements (eliminar tipos si existen)
     result = result.replace(/case\s+([^:]+):/g, 'case $1:');
-    
-    // Convertir default case
     result = result.replace(/default\s*:/g, 'default:');
-    
     return result;
 }
 
 function convertDoWhileLoops(code) {
-    // Convertir do-while loops (la sintaxis es similar)
     return code.replace(/do\s*\{([^}]*)\}\s*while\s*\((.*?)\)\s*;/g, 
         'do {$1} while ($2);');
 }
 
 function convertBreakContinue(code) {
-    // Convertir break y continue (la sintaxis es similar)
     return code.replace(/\bbreak\s*([^;]*);/g, 'break $1;')
               .replace(/\bcontinue\s*([^;]*);/g, 'continue $1;');
 }
 
 function convertArrayListDeclarations(code) {
-    // Caso 1: new ArrayList<>()
     let jsCode = code.replace(/new\s+ArrayList\s*<\s*>\s*\(\s*\)/g, '[]');
-    
-    // Caso 2: new ArrayList<Type>() con tipos
     jsCode = jsCode.replace(/new\s+ArrayList\s*<\s*([^>]+)\s*>\s*\(\s*\)/g, '[]');
-    
-    // Caso 3: new ArrayList() (sin diamantes)
     jsCode = jsCode.replace(/new\s+ArrayList\s*\(\s*\)/g, '[]');
-    
-    // Caso 4: Inicialización con capacidad: new ArrayList(100)
     jsCode = jsCode.replace(/new\s+ArrayList\s*<\s*[^>]*\s*>\s*\(\s*(\d+)\s*\)/g, '[]');
-
-    jsCode = jsCode.replace(/new\s+ArrayList\s*<\s*([^>]*)\s*>\s*\((\w+)\)/g, `typeof $2 !== 'undefined' ? $2 : this.$2`);
-    
+    jsCode = jsCode.replace(/new\s+ArrayList\s*<\s*([^>]*)\s*>\s*\((\w+)\)/g, 
+        (match, type, arrayVar) => {
+            const useThis = needsThis(code, arrayVar);
+            return useThis ? `this.${arrayVar}` : arrayVar;
+        });
     return jsCode;
 }
 
@@ -330,41 +379,60 @@ function convertArrayListVariableDeclarations(code) {
                 initialization.replace(/^=\s*/, '').trim() : '[]';
             return `let ${varName} = ${initValue};`;
         }
-    ).replace(/ArrayList<\w+>\s(\w+)/g, 'let $1')
+    ).replace(/ArrayList<\w+>\s(\w+)/g, 'let $1');
 }
 
 function convertArrayListMethods(code) {
     let result = code;
     
     // add() → push()
-    result = result.replace(/(\w+)\.add\s*\((.*?)\)/g, `typeof $1 !== 'undefined' ? $1.push($2) : this.$1.push($2)`);
+    result = result.replace(/(\w+)\.add\s*\((.*?)\)/g, 
+        (match, obj, value) => {
+            const useThis = classVariables.some(v => v.name === obj);
+            return useThis ? `this.${obj}.push(${value})` : `${obj}.push(${value})`;
+        });
     
-    // get() → acceso por índice $1[$2]
-    result = result.replace(/(\w+)\.get\s*\((.*?)\)/g, `typeof $1 !== 'undefined' ? $1[$2] : this.$1[$2]`);
-    
-    // set() → asignación por índice
-    //result = result.replace(/(\w+)\.set\s*\((.*?),\s*(.*?)\)/g, `typeof $1 !== 'undefined' ? $1[$2] = $3 : this.$1[$2] = $3`);
+    // get() → acceso por índice
+    result = result.replace(/(\w+)\.get\s*\((.*?)\)/g, 
+        (match, obj, index) => {
+            const useThis = classVariables.some(v => v.name === obj);
+            return useThis ? `this.${obj}[${index}]` : `${obj}[${index}]`;
+        });
     
     // size() → length
-    //result = result.replace(/(\w+)\.size\s*\(\s*\)/g, `typeof $1 !== 'undefined' ? $1.length : this.$1.length`);
-    result = result.replace(/(([\w]+(?:\s*\.\s*[\w]+\s*\([^)]*\))*))\s*\.\s*size\s*\(\s*\)/g, `typeof $1 !== 'undefined' ? getCollectionSize($1) : getCollectionSize(this.$1)`);
+    result = result.replace(/(([\w]+(?:\s*\.\s*[\w]+\s*\([^)]*\))*))\s*\.\s*size\s*\(\s*\)/g, 
+        (match, obj) => {
+            const useThis = classVariables.some(v => v.name === obj);
+            return useThis ? `getCollectionSize(this.${obj})` : `getCollectionSize(${obj})`;
+        });
     
     // isEmpty() → length check
-    result = result.replace(/(\w+)\.isEmpty\s*\(\s*\)/g, `typeof $1 !== 'undefined' ? $1.length === 0 : this.$1.length === 0`);
+    result = result.replace(/(\w+)\.isEmpty\s*\(\s*\)/g, 
+        (match, obj) => {
+            const useThis = classVariables.some(v => v.name === obj);
+            return useThis ? `this.${obj}.length === 0` : `${obj}.length === 0`;
+        });
     
     // contains() → includes()
-    result = result.replace(/(\w+)\.contains\s*\((.*?)\)/g, `(typeof $1 !== 'undefined' ? $1.includes($2) : this.$1.includes($2))`);
+    result = result.replace(/(\w+)\.contains\s*\((.*?)\)/g, 
+        (match, obj, value) => {
+            const useThis = false;
+            return useThis ? `this.${obj}.includes(${value})` : `${obj}.includes(${value})`;
+        });
     
     // remove(index) → splice()
-    result = result.replace(/(\w+)\.remove\s*\((\d+)\)/g, `typeof $1 !== 'undefined' ? $1.splice($2, 1) : this.$1.splice($2, 1)`);
-    
-    // remove(object) → filter() o findIndex() + splice()
-    result = result.replace(/(\w+)\.remove\s*\((.*?)\)/g, (match, list, obj) => {
-        return `${list}.splice(${list}.indexOf(${obj}), 1)`;
-    });
+    result = result.replace(/(\w+)\.remove\s*\((\d+)\)/g, 
+        (match, obj, index) => {
+            const useThis = classVariables.some(v => v.name === obj);
+            return useThis ? `this.${obj}.splice(${index}, 1)` : `${obj}.splice(${index}, 1)`;
+        });
     
     // clear() → asignación a array vacío
-    result = result.replace(/(\w+)\.clear\s*\(\s*\)/g, '$1 = []');
+    result = result.replace(/(\w+)\.clear\s*\(\s*\)/g, 
+        (match, obj) => {
+            const useThis = classVariables.some(v => v.name === obj);
+            return useThis ? `this.${obj} = []` : `${obj} = []`;
+        });
     
     return result;
 }
@@ -381,11 +449,8 @@ function convertArrayListReturnTypes(code) {
     );
 }
 
-
-
 export {
     extractClassVariables,
-    returnVariable,
     quitImports,
     replaceHashMap,
     convertHashMapDeclarations,
@@ -412,4 +477,7 @@ export {
     convertArrayListVariableDeclarations,
     convertArrayListMethods,
     convertArrayListReturnTypes,
-}
+    convertHashMapIterations,
+    convertComplexExpressions,
+    removeCommentsAndJavadocs,
+};

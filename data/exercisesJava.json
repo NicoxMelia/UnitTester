@@ -47,7 +47,7 @@
           "dependencies": [],
           "test_cases": [
             {
-              "input": "Animal animal = new Animal(\"Max\", 3);\nanimal.añadirVacuna(\"Rabia\");\nArrayList<Vacuna> vacunas = animal.getVacunas();\nSystem.out.println(vacunas.contains(\"Rabia\"));",
+              "input": "Animal animal = new Animal(\"Max\", 3);\nanimal.añadirVacuna(\"Rabia\");\nArrayList<Vacuna> tieneVacunas = animal.getVacunas();\nSystem.out.println(tieneVacunas.contains(\"Rabia\"));",
               "expected_output": "true"
             },
             {
