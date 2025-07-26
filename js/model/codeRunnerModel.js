@@ -1,33 +1,33 @@
-import {CppInterpreter} from "./Strategies/CppStrategy/CppInterpreter.js";
-import {JavaInterpreter} from "./Strategies/JavaStrategy/JavaInterpreter.js";
-
 export class CodeRunnerModel{
     /**
      * El interpreter tiene las siguientes funciones:
      * - translate: Traduce el código del user a JavaScript.
      * - putLanguageCode: Inserta codigo específico del lenguaje.
      */
-    constructor(){
-        this.interpreter = new JavaInterpreter();
+    constructor(strategy){
+        this.strategy = strategy;
+        this.interpreter = strategy.getInterpreter();
         this.translatedCode = "";
         this.testCases = undefined;
     }
 
+    async getTerminalCode(exercise){
+       let path = this.strategy.getContentToRender(exercise).file; 
+       return this.strategy.getCodeToRender(path)
+    }
+
     translate(code){
         this.translatedCode = this.interpreter.translate(code);
+        this.translatedCode = this.interpreter.putLanguageCode(this.translatedCode); //nueva linea
         return this.translatedCode;
     }
 
     async executeTranslatedCode(jsCode, input) { //Falta ver
-            let output = {
-                salida: ""
-            };
             const currentInput = input;
             
             try {
-                const dynamicFunction = new Function('output', 'currentInput', jsCode);
-                await dynamicFunction(output, currentInput);
-                output = output.salida;
+                const dynamicFunction = this.strategy.getFunctionToRun(jsCode, currentInput);
+                let output = await this.strategy.runTestFunction(dynamicFunction);
                 return { success: true, output: output.trim() };
             } catch (error) {
                 console.error(error.message)
@@ -35,14 +35,9 @@ export class CodeRunnerModel{
             }
         }
 
-    async getExcerciseById(excerciceId){
+    async getExcerciseById(exerciseId){
         //const response = await fetch('../../data/excercices.json');
-        const response = await fetch('../data/excercises.json');
-        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-        const data = await response.json();
-        const exercise = data.exercises.find(e => e.id === excerciceId);
-        if (!exercise) throw new Error();
-        return exercise;
+        return await this.strategy.getExerciseById(exerciseId);
     }
 
     runTests = async () => { //Fata ver
@@ -75,14 +70,15 @@ export class CodeRunnerModel{
     }
 
 
-    setTestCases(excercise){
-        const tests = excercise.test_cases.map(tc => ({
+    setTestCases(exercise){
+        const tests = this.strategy.getTests(exercise).map(tc => ({
             input: tc.input,
             expected: tc.expected_output
         }));
 
         if (tests.length === 0) throw new Error("No test cases");
         this.testCases = tests;
+        //console.log(this.testCases);
     }
 
     getTestCases(){

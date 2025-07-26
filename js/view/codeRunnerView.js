@@ -1,12 +1,16 @@
 export class CodeRunnerView {
 
-    constructor() {
+    constructor(strategy) {
+        this.strategy = strategy;
         const urlParams = new URLSearchParams(window.location.search);
         this.ejercicioId = urlParams.get("ejercicio");
         this.testResults = document.getElementById('testResults');
         this.consignaContainer = document.getElementById("consignaContainer");
         this.tablaCasos = document.getElementById("tablaCasos");
         this.code = undefined;
+        this.titleCode = document.getElementById('titleCode');
+        this.strategy.renderTerminalTitle(this.titleCode);
+        this.userCode = document.getElementById('userCode');
 
         /**
          * Its used for tests
@@ -23,12 +27,16 @@ export class CodeRunnerView {
         this.resultsList.innerHTML = '';
     }
 
+    renderTerminalCode(code){
+        this.userCode.value = code;
+    }
+
     getExcerciseId() {
         return this.ejercicioId;
     }
 
     getCodeToTranslate(){
-        this.code = document.getElementById("cppCode").value;
+        this.code = document.getElementById("userCode").value;
         return this.code;
     }
 
@@ -86,8 +94,9 @@ export class CodeRunnerView {
     renderExcercice(excercise){
         this.consignaContainer.innerHTML = `<div class="text-gray-400">⏳ Cargando consigna...</div>`;
         this.tablaCasos.innerHTML = "";
-        this.renderInstruction(excercise);
-        this.renderTable(excercise);
+        let contentToRender = this.strategy.getContentToRender(excercise);
+        this.renderInstruction(contentToRender);
+        this.renderTable(contentToRender);
     }
 
     renderTable(excercise){
@@ -104,7 +113,7 @@ export class CodeRunnerView {
         excercise.test_cases.forEach(test => {
             tablaHTML += `
                 <tr class="bg-gray-800">
-                    <td class="px-3 py-2 border border-gray-700 font-mono">${test.input}</td>
+                    <td class="px-3 py-2 border border-gray-700 font-mono whitespace-pre-wrap">${test.input}</td>
                     <td class="px-3 py-2 border border-gray-700 font-mono">${test.expected_output}</td>
                 </tr>`;
         });
@@ -147,7 +156,7 @@ export class CodeRunnerView {
                 </div>
                 <div>
                     <div class="text-xs text-gray-400 mb-1">Obtenido</div>
-                    <div class="bg-gray-700 p-2 rounded font-mono">${this.formatOutput(test.output)}</div>
+                    <div class="bg-gray-700 p-2 break-words rounded font-mono">${this.formatOutput(test.output)}</div>
                 </div>
             </div>
         `;
@@ -176,6 +185,53 @@ export class CodeRunnerView {
         this.resultsList.appendChild(this.resultDiv);
     }
 
+    renderClass(exercise){
+        const card = document.createElement('div');
+        card.className = 'card fade-in bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700 transition-all duration-300 space-y-4';
 
+        const title = document.createElement('h2');
+        title.className = 'text-2xl font-bold text-cyan-400 flex items-center gap-2';
+        title.innerHTML = `📘<span class="text-white">${exercise.title}</span>`;
+
+        const desc = document.createElement('p');
+        desc.className = 'text-gray-300 text-sm';
+        desc.innerText = exercise.description;
+
+        // Tabla de ejemplo
+        const tableWrapper = document.createElement('div');
+        //const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'overflow-x-auto rounded-lg';
+
+        const table = document.createElement('table');
+        table.className = 'w-full text-sm border border-gray-700';
+
+        const thead = document.createElement('thead');
+        thead.className = 'bg-gray-700 text-gray-300 text-xs uppercase';
+        thead.innerHTML = `
+            <tr>
+            <th class="px-3 py-2 text-left">📥 Input</th>
+            <th class="px-3 py-2 text-left">📤 Output Esperado</th>
+            </tr>
+        `;
+
+        const tbody = document.createElement('tbody');
+        (exercise.test_cases || []).slice(0, 2).forEach(test => {
+            const row = document.createElement('tr');
+            row.className = 'border-t border-gray-600';
+            row.innerHTML = `
+            <td class="px-3 py-2 whitespace-pre-wrap text-gray-100 bg-gray-800">${test.input}</td>
+            <td class="px-3 py-2 whitespace-pre-wrap text-green-400 bg-gray-800">${test.expected_output}</td>
+            `;
+            tbody.appendChild(row);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            tableWrapper.appendChild(table);
+
+            card.appendChild(title);
+            card.appendChild(desc);
+            return card;
+    }
 
 }

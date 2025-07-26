@@ -1,0 +1,39 @@
+{
+  "exercises": [
+    {
+      "id": "E1",
+      "title": "Tienda Musical",
+      "description": "Modelar una tienda de articulos musicales.",
+      "classes": [
+        {
+          "title": "Cliente",
+          "description": "Completar el codigo de la clase Cliente.",
+          "file": "./TiendaMusical/Cliente.java",
+          "dependencies":[
+           
+          ],
+          "test_cases": [
+            {
+                "input": "Cliente cliente = new Cliente(25, \"Juan\");\nSystem.out.println(cliente.getNombre());",
+                "expected_output": "Juan"
+            }
+          ]
+        },
+        {
+          "title": "Disco",
+          "description": "Completar el codigo de la clase Disco.",
+          "file": "./TiendaMusical/Disco.java",
+          "dependencies":[
+            "./TiendaMusical/Dependencies/Producto.js"
+          ],
+          "test_cases": [
+            {
+                "input": "Disco disco = new Disco(\"TTT5\", \"Woman\", 200, \"The Beathles\", 2000);\nSystem.out.println(disco.getTitulo());",
+                "expected_output": "Woman"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
