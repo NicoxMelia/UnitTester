@@ -18,6 +18,7 @@ export class CodeRunnerModel{
 
     translate(code){
         this.translatedCode = this.interpreter.translate(code);
+        this.translatedCode = this.interpreter.putLanguageCode(this.translatedCode); //nueva linea
         return this.translatedCode;
     }
 
@@ -77,7 +78,7 @@ export class CodeRunnerModel{
 
         if (tests.length === 0) throw new Error("No test cases");
         this.testCases = tests;
-        console.log(this.testCases);
+        //console.log(this.testCases);
     }
 
     getTestCases(){

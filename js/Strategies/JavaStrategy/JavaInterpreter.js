@@ -29,6 +29,13 @@ import {
     convertArrayListVariableDeclarations,
     convertArrayListMethods,
     convertArrayListReturnTypes,
+    convertAbstractClasses,
+    convertImplements,
+    convertInterfaces,
+    convertTryCatch,
+    addException,
+    convertEnums,
+    quitThrows
 } from "./interpreters.js";
 
 export class JavaInterpreter {
@@ -99,14 +106,24 @@ export class JavaInterpreter {
          // 4. Convertir expresiones complejas (¡NUEVO!)
         jsCode = convertComplexExpressions(jsCode);  // <--- Aquí
 
+
+        // 5. Convertir clases abstractas e interfaces
+        jsCode = convertAbstractClasses(jsCode);
+        jsCode = convertImplements(jsCode);
+        jsCode = convertTryCatch(jsCode);
+        jsCode = addException(jsCode);
+        jsCode = convertInterfaces(jsCode);
+        jsCode = convertEnums(jsCode);
+        jsCode = quitThrows(jsCode);
+
         // 7. Salida y reconstrucción
         jsCode = convertSystemOut(jsCode);
         if (classVariables.length > 0) {
             jsCode = rebuildClassWithProperties(jsCode, classVariables);
         }
         
-        //return jsCode;
-        return this.putLanguageCode(jsCode);
+        return jsCode; //comentar esta
+       // return this.putLanguageCode(jsCode);
     }
 
     putLanguageCode(jsCode) {
@@ -131,7 +148,7 @@ export class JavaInterpreter {
                 ${jsCode}
             `;*/
 
-        jsCode = `
+       /* jsCode = `
         function getCollectionSize(collection) {
         console.log(collection);
             if (collection instanceof Map) {
@@ -140,9 +157,27 @@ export class JavaInterpreter {
                 return collection.length;
             }
         }
-            ${jsCode}`
+            ${jsCode}`*/
+
+        let extraCode = 'function getCollectionSize(collection) {\n' +
+            '    if (collection instanceof Map) {\n' +
+            '        return collection.size;\n' +
+            '    } else if (Array.isArray(collection)) {\n' +
+            '        return collection.length;\n' +
+            '    }\n' +
+            '}\n';
+        
+        extraCode += 'function applyMixins(klass, ...mixins) {\n';
+        extraCode += '   mixins.forEach(mixin => {\n';
+        extraCode += '     for (const [key, value] of Object.entries(mixin)) {\n';
+        extraCode += '        if (!klass.prototype[key]) {\n';
+        extraCode += '            klass.prototype[key] = value;\n';
+        extraCode += '        }\n';
+        extraCode += '     }\n';
+        extraCode += '   });\n';
+        extraCode += '}\n';
     
-        return jsCode;
+        return extraCode + jsCode;
     }
     
 }

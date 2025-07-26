@@ -154,6 +154,131 @@
           ]
         }
       ]
+    },
+    {
+      "id": "E3",
+      "title": "Sistema de Gestión de Aeropuerto",
+      "description": "Modelar un sistema de gestión para un aeropuerto con aeronaves, vuelos y pasajeros.",
+      "classes": [
+        {
+          "title": "Aeronave",
+          "description": "Completar el código de la clase abstracta Aeronave con sus métodos abstractos y concretos.",
+          "file": "./Aeropuerto/Aeronave.java",
+          "dependencies": [
+            "./Aeropuerto/Dependencies/AvionComercial.java"
+          ],
+          "test_cases": [
+            {
+              "input": "AvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\nSystem.out.println(avion.getModelo());",
+              "expected_output": "Boeing 737"
+            },
+            {
+              "input": "AvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\nSystem.out.println(avion.puedeVolar(4000));",
+              "expected_output": "true"
+            }
+          ]
+        },
+        {
+          "title": "AvionComercial",
+          "description": "Completar el código de la clase AvionComercial que hereda de Aeronave.",
+          "file": "./Aeropuerto/AvionComercial.java",
+          "dependencies": [
+            "./Aeropuerto/Aeronave.java"
+          ],
+          "test_cases": [
+            {
+              "input": "AvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\navion.agregarServicio(\"WiFi\");\nSystem.out.println(avion.getServiciosABordo().size());",
+              "expected_output": "1"
+            },
+            {
+              "input": "AvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\nSystem.out.println(avion.calcularConsumoCombustible());",
+              "expected_output": "65.0"
+            }
+          ]
+        },
+        {
+          "title": "Vuelo",
+          "description": "Completar el código de la clase Vuelo que gestiona pasajeros y aeronaves.",
+          "file": "./Aeropuerto/Vuelo.java",
+          "dependencies": [
+            "./Aeropuerto/Aeronave.java",
+            "./Aeropuerto/AvionComercial.java",
+            "./Aeropuerto/Pasajero.java",
+            "./Aeropuerto/EstadoVuelo.java",
+            "./Aeropuerto/VueloLlenoException.java"
+          ],
+          "test_cases": [
+            {
+              "input": "AvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\nVuelo vuelo = new Vuelo(\"VL-101\", \"CIUDAD A\", \"CIUDAD B\", LocalDateTime.now(), LocalDateTime.now().plusHours(2), avion);\nSystem.out.println(vuelo.getCodigoVuelo());",
+              "expected_output": "VL-101"
+            },
+            {
+              "input": "AvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 1, 5000, 6, true);\nVuelo vuelo = new Vuelo(\"VL-101\", \"CIUDAD A\", \"CIUDAD B\", LocalDateTime.now(), LocalDateTime.now().plusHours(2), avion);\nPasajero p1 = new Pasajero(\"PAS001\", \"Juan\", \"MX\");\nPasajero p2 = new Pasajero(\"PAS002\", \"Maria\", \"US\");\nvuelo.agregarPasajero(p1);\ntry {\n\tvuelo.agregarPasajero(p2);\n} catch (VueloLlenoException e) {\n\tSystem.out.println(\"Error\");\n}",
+              "expected_output": "Error"
+            }
+          ]
+        },
+        {
+          "title": "Aeropuerto",
+          "description": "Completar el código de la clase Aeropuerto que implementa ServiciosAeroportuarios.",
+          "file": "./Aeropuerto/Aeropuerto.java",
+          "dependencies": [
+            "./Aeropuerto/ServiciosAeroportuarios.java",
+            "./Aeropuerto/Vuelo.java",
+            "./Aeropuerto/Aeronave.java",
+            "./Aeropuerto/ServicioPremium.java",
+            "./Aeropuerto/AvionComercial.java"
+          ],
+          "test_cases": [
+            {
+              "input": "Aeropuerto aeropuerto = new Aeropuerto(\"Internacional\", \"INT\", \"Ciudad\");\nAvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\naeropuerto.registrarAeronave(avion);\nSystem.out.println(aeropuerto.getAeronaves().size());",
+              "expected_output": "1"
+            },
+            {
+              "input": "Aeropuerto aeropuerto = new Aeropuerto(\"Internacional\", \"INT\", \"Ciudad\");\nAvionComercial avion = new AvionComercial(\"MAT-001\", \"Boeing 737\", 150, 5000, 6, true);\nVuelo vuelo = new Vuelo(\"VL-101\", \"A\", \"B\", LocalDateTime.now(), LocalDateTime.now().plusHours(2), avion);\naeropuerto.programarVuelo(vuelo);\naeropuerto.asignarPuertaEmbarque(\"VL-101\", 5);\nSystem.out.println(aeropuerto.obtenerVuelosPorPuerta(5).size());",
+              "expected_output": "1"
+            }
+          ]
+        },
+        {
+          "title": "VueloLlenoException",
+          "description": "Completar el código de la excepción personalizada VueloLlenoException.",
+          "file": "./Aeropuerto/VueloLlenoException.java",
+          "dependencies": [],
+          "test_cases": [
+            {
+              "input": "try {\n\tthrow new VueloLlenoException(\"VL101\", 150);\n} catch (VueloLlenoException e) {\n\tSystem.out.println(e.getCodigoVuelo());\n}",
+              "expected_output": "VL101"
+            },
+            {
+              "input": "try {\n\tthrow new VueloLlenoException(\"VL101\", 150);\n} catch (VueloLlenoException e) {\n\tSystem.out.println(e.getMessage());\n}",
+              "expected_output": "El vuelo VL101 está lleno. Capacidad máxima: 150"
+            }
+          ]
+        }
+      ],
+      "additional_resources": [
+        {
+          "title": "EstadoVuelo",
+          "description": "Enumeración de estados de vuelo",
+          "file": "./Aeropuerto/EstadoVuelo.java"
+        },
+        {
+          "title": "ServicioPremium",
+          "description": "Enumeración de servicios premium",
+          "file": "./Aeropuerto/ServicioPremium.java"
+        },
+        {
+          "title": "ServiciosAeroportuarios",
+          "description": "Interfaz de servicios del aeropuerto",
+          "file": "./Aeropuerto/ServiciosAeroportuarios.java"
+        },
+        {
+          "title": "Pasajero",
+          "description": "Clase que representa a un pasajero",
+          "file": "./Aeropuerto/Pasajero.java"
+        }
+      ]
     }
   ]
 }

@@ -69,7 +69,7 @@ export class JavaStrategy {
     }
 
     getFunctionToRun(jsCode, input) {
-        const test = this.interpreter.translate(input);
+        const test = this.interpreter.translate(input); //aca se agregan las bad lines
         const code = jsCode + `
             try{
                 ${test}

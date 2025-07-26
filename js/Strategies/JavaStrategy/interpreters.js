@@ -36,7 +36,8 @@ function removeCommentsAndJavadocs(javaCode) {
     // 3. Comentarios de una línea (// ...)
     return javaCode.replace(/\/\*\*[\s\S]*?\*\//g, '')  // Javadocs
                    .replace(/\/\*[\s\S]*?\*\//g, '')    // Comentarios /* */
-                   .replace(/\/\/.*$/gm, '');           // Comentarios //
+                   .replace(/\/\/.*$/gm, '')            // Comentarios //
+                   .replace(/@Override/g, '');         // Eliminar @override
 }
 
 function needsThis(code, varName) {
@@ -106,21 +107,21 @@ function convertHashMapMethods(code) {
     // put() → set()
     result = result.replace(/(\b\w+(?:\.\w+\(\))*)\s*\.\s*put\s*\(\s*([^)]*?)(?=\s*,\s*[^)]*\))\s*,\s*([^)]*)\s*\)/g, 
         (match, obj, key, value) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `this.${obj}.set(${key}, ${value})` : `${obj}.set(${key}, ${value})`;
         });
     
     // get() → get()
     result = result.replace(/(\w+)\.get\s*\((.*?)\)/g, 
         (match, obj, key) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);;
             return useThis ? `this.${obj}.get(${key})` : `${obj}.get(${key})`;
         });
     
     // containsKey() → has()
     result = result.replace(/(?:System\s*\.\s*out\s*\.\s*println\s*\(\s*)?(\b\w+(?:\.\w+\(\))*)\s*\.\s*containsKey\s*\(\s*([^)]*)\s*\)(?:\s*\))?/g, 
         (match, obj, key, offset, original) => {
-            const useThis = needsThis(original, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             const replacement = useThis ? `this.${obj}.has(${key})` : `${obj}.has(${key})`;
             if (match.includes('System.out.println')) {
                 return `System.out.println(${replacement})`;
@@ -131,49 +132,49 @@ function convertHashMapMethods(code) {
     // keySet() → Array.from(map.keys())
     result = result.replace(/(\w+)\.keySet\s*\(\s*\)/g, 
         (match, obj) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `Array.from(this.${obj}.keys())` : `Array.from(${obj}.keys())`;
         });
     
     // values() → Array.from(map.values())
     result = result.replace(/(\w+)\.values\s*\(\s*\)/g, 
         (match, obj) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `Array.from(this.${obj}.values())` : `Array.from(${obj}.values())`;
         });
     
     // entrySet() → Array.from(map.entries())
     result = result.replace(/(\w+)\.entrySet\s*\(\s*\)/g, 
         (match, obj) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `Array.from(this.${obj}.entries())` : `Array.from(${obj}.entries())`;
         });
     
     // size() → getCollectionSize
     result = result.replace(/(\b\w+(?:\.\w+\(\))*)\s*\.\s*size\s*\(\s*\)/g, 
         (match, obj) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `getCollectionSize(this.${obj})` : `getCollectionSize(${obj})`;
         });
     
     // isEmpty() → size check
     result = result.replace(/(\w+)\.isEmpty\s*\(\s*\)/g, 
         (match, obj) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `this.${obj}.size === 0` : `${obj}.size === 0`;
         });
     
     // remove() → delete()
     result = result.replace(/(\w+)\.remove\s*\((.*?)\)/g, 
         (match, obj, key) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `this.${obj}.delete(${key})` : `${obj}.delete(${key})`;
         });
     
     // clear() → clear()
     result = result.replace(/(\w+)\.clear\s*\(\s*\)/g, 
         (match, obj) => {
-            const useThis = needsThis(code, obj);
+            const useThis = classVariables.some(v => v.name === obj);
             return useThis ? `this.${obj}.clear()` : `${obj}.clear()`;
         });
     
@@ -216,11 +217,12 @@ function convertHashMapDeclarations(code) {
 
 function convertHashMapReturnTypes(code) {
     return code.replace(
-        /(public|private|protected)\s+HashMap\s*<\s*([^>]+)\s*>\s+(\w+)\s*\(([^)]*)\)/g,
+        /(public|private|protected)\s+HashMap\s*<\s*([^>]*(?:<[^>]*>)*[^>]*)\s*>\s+(\w+)\s*\(([^)]*)\)/g,
         (match, modifier, genericTypes, methodName, params) => {
             const jsParams = params.split(',')
                 .map(p => p.trim().split(/\s+/).pop())
                 .join(', ');
+                console.log(`Converting method: ${methodName}(${jsParams})`);
             return `${methodName}(${jsParams})`;
         }
     );
@@ -235,14 +237,56 @@ function convertSystemOut(code) {
 }
 
 function convertConstructors(code) {
-    return code.replace(/public\s+(\w+)\s*\(([^)]*)\)/g, (match, className, params) => {
+    let match;
+   let reg = new RegExp(/public\s+abstract\s+class\s+(\w+)/g);
+   let abstractClasses = [];
+   while(match = reg.exec(code)) {
+       console.log("Found abstract class:", match[1]);
+       abstractClasses.push(match[1]);
+   }
+   if(abstractClasses.length > 0) {
+        return code.replace(/public\s+(\w+)\s*\(([^)]*)\)\s*{/g, (match, className, params) => {
         const jsParams = params.split(',')
-            .map(p => {
-                const parts = p.trim().split(/\s+/);
-                return parts.length > 1 ? parts[parts.length - 1] : p.trim();
-            })
+            .map(p => p.trim().split(/\s+/).pop())
             .join(', ');
-        return `constructor(${jsParams})`;
+            if (!abstractClasses.includes(className)) {
+                return `constructor(${jsParams}){`;
+            }
+        return `constructor(${jsParams}) {\n        if (new.target === ${className}) {\n            throw new Error("Cannot instantiate abstract class");\n        }\n`;
+    });
+    }
+    if(new RegExp(/class\s+(\w+)\s+implements\s+([^)]*)\s*{/g).test(code)) {
+        console.log("Converting class with interface");
+        const interfaceRegex = /class\s+(\w+)\s+implements\s+([^{]+)\s*{/g;
+        const classDetails = [];
+        let match;
+        let callerMixin = "applyMixins(";
+
+        while ((match = interfaceRegex.exec(code)) !== null) {
+            const className = match[1];
+            const interfaceList = match[2].split(',').map(i => i.trim());
+            
+            classDetails.push({
+                className: className,
+                interfaces: interfaceList
+            });
+        }
+        callerMixin += classDetails[0].className + ', ';
+        callerMixin += classDetails[0].interfaces.map(i => i + 'Mixin').join(', ');
+        callerMixin += ');';
+        return code.replace(/public\s+(\w+)\s*\(([^)]*)\)\s*{/g, (match, className, params) => {
+        const jsParams = params.split(',')
+            .map(p => p.trim().split(/\s+/).pop())
+            .join(', ');
+        return `constructor(${jsParams}) {\n        ${callerMixin}`;
+        });
+    }
+
+    return code.replace(/public\s+(\w+)\s*\(([^)]*)\)\s*{/g, (match, className, params) => {
+        const jsParams = params.split(',')
+            .map(p => p.trim().split(/\s+/).pop())
+            .join(', ');
+        return `constructor(${jsParams}){`;
     });
 }
 
@@ -449,6 +493,91 @@ function convertArrayListReturnTypes(code) {
     );
 }
 
+function convertAbstractClasses(code) {
+
+    let jsCode = code.replace(/public\s+abstract\s+class\s+(\w+)/g, 'class $1');
+    
+    return jsCode.replace(/public\s+abstract\s+([\w<>]+)\s+(\w+)\s*\(([^)]*)\)\s*;/g, 
+        '$2($3) {\n        throw new Error("Abstract method not implemented");\n    }');
+}
+
+function convertInterfaces(code) {
+    return code.replace(/public\s+interface\s+(\w+)\s*{([^}]*})/g, (match, interfaceName, body) => {
+        const methods = body.match(/([\w<>]+)\s+(\w+)\s*\(([^)]*)\)\s*;/g) || [];
+        const jsInterface = `class ${interfaceName}Mixin {\n`;
+        const jsMethods = methods.map(method => {
+            //alert(`Converting method: ${method}`);
+            const reg = new RegExp(/\s+([^(]*)\(([^\)]*)/);
+            let match = reg.exec(method);
+            const methodName = match[1].trim();
+            const params = []
+            if (match[2]) {
+                match[2].split(',').forEach(param => {
+                    const paramParts = param.trim().split(/\s+/);
+                    params.push(paramParts[paramParts.length - 1]);
+                });
+            }
+            return `    ${methodName}(${params.join(', ')}) {\n        throw new Error("Interface method not implemented");\n    }`;
+        }).join('\n');
+        return jsInterface + jsMethods + '\n}\n';
+    })
+}
+
+function convertImplements(code) {
+    return code.replace(/implements\s+([\w\s,]+)/g, '');
+}
+
+function convertTryCatch(code) {
+    let result =code.replace(/catch\s\((\w*)\s(\w*)\)\s{\n([^\n]*)\n\s*}/g, 
+        (match, exceptionName, exceptionVar, catchBlock) => {
+            return `catch (${exceptionVar}) {
+            if(${exceptionVar} instanceof  ${exceptionName}) {
+    ${catchBlock}
+            }
+        }`;
+        });
+    //result = result.replace(/:?\(Exception|:?\sException/g, 'Error');
+    result = result.replace(/:?\(Exception/g, 'Error');
+    result = result.replace(/:?\sException/g, ' Error');
+    return result.replace('getMessage()', 'message');
+}
+
+function addException(code) {
+    const reg = new RegExp(/throw\snew\s+(\w+)\s*\(([^)]*)\)\s*;/g);
+    let match;
+    let exceptionClass = '';
+    let exceptions = new Set();
+
+    while ((match = reg.exec(code)) !== null) {
+        exceptions.add(match[1]);
+    }
+    for (let exception of exceptions) {
+        if (exception !== "Error") {
+            exceptionClass += 'class ' + exception + ' extends Error {\n';
+            exceptionClass += '    constructor(message) {\n';
+            exceptionClass += '        super(message);\n';
+            exceptionClass += '    }\n}\n';
+        }
+    }
+    return exceptionClass + code;
+}
+
+function convertEnums(code) {
+    return code.replace(/public\s+enum\s+(\w+)\s*{\n([^}]*)}/g, (match, enumName, enumValues) => {
+        const jsEnumName = enumName;
+        const jsEnumValues = enumValues.split(',').map(v => v.trim()).join(', ');
+        console.log(jsEnumValues)
+        let jsEnum = 'const ' + jsEnumName + ' = {\n';
+        jsEnum += jsEnumValues.split(',').map(v => `    ${v.trim()}: '${v.trim()}'`).join(',\n');
+        jsEnum += '\n};\n\n';
+        return jsEnum;
+    });
+}
+
+function quitThrows(code) {
+    return code.replace(/throws\s+[\w\s,]+/g, '');
+}
+
 export {
     extractClassVariables,
     quitImports,
@@ -480,4 +609,11 @@ export {
     convertHashMapIterations,
     convertComplexExpressions,
     removeCommentsAndJavadocs,
+    convertAbstractClasses,
+    convertImplements,
+    convertTryCatch,
+    addException,
+    convertInterfaces,
+    convertEnums,
+    quitThrows
 };
