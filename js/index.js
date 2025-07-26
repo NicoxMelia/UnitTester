@@ -1,128 +1,11 @@
 import * as translationFunctions from "./interpreters.js"; 
-import { putExtraFunctions } from "./extraFunctions.js";
+import { putExtraFunctions } from "./model/extraFunctions.js";
 
 // Variables globales
-let currentInput = "";
-let output = "";
-let error = {
-    state: false,
-    message: "",
-    line: null
-    
-};
 
-
-function showError(message) {
-    const testResults = document.getElementById('testResults');
-    testResults.innerHTML = `
-        <div class="bg-gray-700 px-4 py-3">
-            <h2 class="font-mono text-sm font-semibold">Error de Sintaxis</h2>
-        </div>
-        <div class="p-4 space-y-3">
-            <div class="bg-red-900/20 border border-red-800 p-3 rounded-md">
-                <div class="flex items-center text-red-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="font-medium">Error al compilar</span>
-                </div>
-                <div class="mt-2 text-sm font-mono text-red-300">${message}</div>
-            </div>
-        </div>
-    `;
-}
 
 // Traductor C++ a JS mejorado
-function translateCppToJs(cppCode) {
-    const originalLines = cppCode.split('\n');
-    let translatedLines = [];
-    let untranslatedLines = [];
-    let jsCode = '';
-    let index = 1;
 
-    const EXECUTION_ORDER = [
-    'removeIncludes',
-    'putVariables',
-    'putFunctions',
-    'manageCin',
-    'manageCout',
-    'manageEndl',
-    'manageControlFlow',
-    'manageExceptions',
-    'putMain',
-    'manageArrays'
-];
-
-
-    originalLines.forEach(line => {
-        let lineReplaced = false;
-        let trimmedLine = line.trim();
-
-        // Ignorar líneas vacías o comentarios
-        if (!trimmedLine || trimmedLine.startsWith('//')) {
-            translatedLines.push(line); // Conservar formato original
-            return;
-        }
-
-        EXECUTION_ORDER.forEach(funcName => {
-            if (translationFunctions[funcName]) {
-                //console.log(`Applying ${funcName}...`);
-                const translatedLine = translationFunctions[funcName](line);
-                if(translatedLine !== line && translatedLine != undefined) {
-                    lineReplaced = true;
-                    translatedLines.push(translatedLine); // Agregar línea traducida
-                }
-            } else {
-                console.warn(`⚠️ Función ${funcName} no encontrada`);
-            }
-        });
-
-        if (!lineReplaced && line.trim() !== '}') {
-                console.warn(`⚠️ Syntax error at: Line: ${index}: ${line}`);
-                error.state = true;
-                error.message = `⚠️ Syntax error at line ${index}: ${line}`;
-                error.line = index;
-        }
-
-        if( !lineReplaced && line.trim() == '}') {
-            translatedLines.push(line); // Conservar llaves de cierre
-        }
-        index++;
-
-        // Aplicar patrones de reemplazo
-    //     for (const {pattern, replacement} of replacementPatterns) {
-    //         if (pattern.test(trimmedLine)) {
-    //             const translatedLine = line.replace(pattern, replacement);
-    //             translatedLines.push(translatedLine);
-    //             jsCode += translatedLine + '\n';
-    //             lineReplaced = true;
-    //             break;
-    //         }
-    //     }
-
-    //     if (!lineReplaced) {
-    //         untranslatedLines.push(line);
-    //         translatedLines.push(`/* SIN TRADUCCIÓN: ${line} */`);
-    //     }
-    // });
-
-    // Verificar líneas no traducidas
-    // if (untranslatedLines.length > 0) {
-    //     console.error('⚠️ Líneas no traducidas:');
-    //     untranslatedLines.forEach(line => console.error(`- ${line}`));
-    // }
-
-
-
-    return {
-        translatedCode: translatedLines.join('\n'), // Con líneas sin traducir comentadas
-        fullOutput: translatedLines.join('\n'), // Con líneas sin traducir comentadas
-        untranslatedLines: untranslatedLines
-    };
-});
-
-return putExtraFunctions(translatedLines.join('\n'));
-}
 
         // Función para ejecutar el código traducido
         async function executeTranslatedCode(jsCode, input) {
@@ -151,8 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const ejercicioId = urlParams.get("ejercicio");
+    
 
     /* CARGA EL EJERCICIO EN PANTALLA
     * Esta funcion setea el ejercicio en la variable ejercicio
@@ -209,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(err => {
                     consignaContainer.innerHTML = `<div class="text-red-500 font-semibold">⚠️ Error al cargar el ejercicio</div>`;
                     console.error(err);
-                });
+                }); //Falta checkear esto
         }
     }
     
@@ -246,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showError(error.message);
             error.state = false; // Resetear error
             return;
-        }
+        }// Falta ver esto
         
         // Ejecutar cada test
         for (const [index, test] of testCases.entries()) {
