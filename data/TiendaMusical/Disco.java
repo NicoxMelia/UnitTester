@@ -13,10 +13,7 @@ public class Disco extends Producto {
     private HashMap<Integer, String> canciones; // Número de pista -> Nombre canción
 
     public Disco(String id, String titulo, double precio, String artista, int anioLanzamiento) {
-        super(id, titulo, precio);
-        this.artista = artista;
-        this.anioLanzamiento = anioLanzamiento;
-        this.canciones = new HashMap<>();
+        // TO DO: Implementar el constructor
     }
 
     /**

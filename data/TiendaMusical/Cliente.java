@@ -14,9 +14,7 @@ public class Cliente {
     private HashMap<String, Integer> historialCompras; // ID Producto -> Cantidad
 
     public Cliente(String id, String nombre) {
-        this.id = id;
-        this.nombre = nombre;
-        this.historialCompras = new HashMap<>();
+        // TO DO: Implementar el constructor
     }
 
     /**

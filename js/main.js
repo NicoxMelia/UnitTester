@@ -10,7 +10,7 @@ function getStrategyByLang(lang) {
     } else if (lang === 'cpp') {
         return new CppStrategy();
     } else {
-        return new CppStrategy(); // Default to English if no valid lang is provided
+        return new JavaStrategy();
     }
 }
 
